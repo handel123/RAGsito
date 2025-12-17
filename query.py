@@ -28,6 +28,7 @@ docstore_dir = "./docstore_parents"  # Directorio para persistir los chunks pare
 logs_dir = "./debug_logs"  # Directorio para logs de debug
 # 3. Inicializar Vectorstore (para los chunks child)
 embedding_model = "text-embedding-3-large"
+model_url = os.getenv("MODEL_URL")
 
 # Crear directorio de logs si no existe
 Path(logs_dir).mkdir(exist_ok=True)
@@ -288,7 +289,11 @@ def obtener_respuesta_stream(query, api_hk):
     }
 
     #client = openai.OpenAI(api_key=api_key)
-    client = openai.OpenAI(api_key=api_hk, base_url="https://us.inference.heroku.com/v1/")
+    if model_url:
+        client = openai.OpenAI(api_key=api_hk, base_url=model_url)
+    else:
+        client = openai.OpenAI(api_key=api_hk)
+    
     co = cohere.ClientV2(
         api_key=api_key_cohere
     )
