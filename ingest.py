@@ -126,34 +126,3 @@ if num_docs_indexados < len(df):
 
 
 
-
-
-# # Ejemplo de uso rápido
-# print("\n--- Prueba de consulta ---")
-
-# filtro = {
-    
-#     "date": "Sep 23, 2025 @ 00:00:00.000"
-    
-# }
-# retriever.search_kwargs = {
-#     "k": 10,           
-#     "filter": filtro,
-    
-# }
-
-
-# response = retriever.invoke("el partido comunista")
-
-
-
-# print(f"Encontrados {len(response)} documentos parent relevantes")
-# for i, doc in enumerate(response[:2], 1):
-#     print(f"\nDocumento parent {i}:")
-#     print(f"Medio: {doc.metadata.get('media_outlet', 'N/A')}")
-#     print(f"Fecha: {doc.metadata.get('date', 'N/A')}")
-#     print(f"Tamaño: {len(doc.page_content)} caracteres")
-#     print(f"Contenido (primeros 200 chars): {doc.page_content[:200]}...")
-    
-# if len(response) > 0:
-#     print(response[0].page_content)

@@ -43,38 +43,6 @@ async def root():
         }
     }
 
-# @app.post("/query", response_model=QueryResponse)
-# async def query_endpoint(request: QueryRequest):
-#     """
-#     Endpoint para realizar consultas al sistema RAG.
-    
-#     Args:
-#         request: Objeto con la consulta y parámetros opcionales
-        
-#     Returns:
-#         QueryResponse con la pregunta original y la respuesta generada
-#     """
-#     try:
-#         if not request.query or request.query.strip() == "":
-#             raise HTTPException(status_code=400, detail="La consulta no puede estar vacía")
-        
-#         # Ejecutar la consulta en un thread separado para no bloquear
-#         respuesta = await asyncio.to_thread(
-#             obtener_respuesta,
-#             request.query,
-#             api_key2,
-#             request.k
-#         )
-        
-#         return QueryResponse(
-#             query=request.query,
-#             response=respuesta,
-#             status="success"
-#         )
-    
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error al procesar la consulta: {str(e)}")
-
 @app.post("/query/stream")
 async def query_stream_endpoint(request: QueryRequest):
     """
@@ -98,7 +66,7 @@ async def query_stream_endpoint(request: QueryRequest):
                 
                 # Crear el generador
                 def sync_generator():
-                    return obtener_respuesta_stream(request.query, api_key, request.k)
+                    return obtener_respuesta_stream(request.query, api_key)
                 
                 generator = await loop.run_in_executor(None, sync_generator)
                 

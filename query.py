@@ -87,280 +87,6 @@ retriever = ParentDocumentRetriever(
 
 
 
-# def obtener_respuesta(query, api_key, k=10):
-#     # Inicializar estructura de log
-#     debug_log = {
-#         "timestamp": datetime.now().isoformat(),
-#         "query_original": query,
-#         "k_parameter": k,
-#         "steps": []
-#     }
-
-#     client = openai.OpenAI(api_key=api_key)
-#     co = cohere.ClientV2(
-#     api_key="PLrzlC2nzPxWi6MpEO7wHJ8iMu1d7Vi3fERihIaG"
-#     )
-
-
-#     analysis_prompt = f"""
-#         Analiza la siguiente pregunta de un usuario sobre noticias.
-
-#         Devuelve un JSON con este esquema EXACTO:
-
-#         {{
-#         "subqueries": list[string],
-#         "date_filter": string | null
-#         }}
-
-#         Reglas:
-#         - debe subdividir la query si es necesario en subqueries con al menos una pregunta concreta
-#         - las subqueries son subpreguntas formadas de la pregunta original para buscar en la base de datos
-#         - Las subqueries deben ser SEMÁNTICAMENTE DIFERENTES entre sí
-#         - No generes subqueries que solo cambien sinónimos
-#         - Cada subquery debe apuntar a un aspecto distinto de la pregunta
-#         - no forzar subqueries si la pregunta es simple
-#         - date_filter solo si se puede inferir una fecha exacta
-#         - El formato de fecha DEBE ser: "Sep 23, 2025 @ 00:00:00.000"
-#         - Si no hay fecha clara, usa null
-#         - No inventes fechas
-#         - No agregues texto fuera del JSON
-
-#         Pregunta:
-#         \"\"\"{query}\"\"\"
-#     """
-    
-    
-
-#     analysis_response = client.chat.completions.create(
-#         model="gpt-5-mini",
-#         messages=[{"role": "user", "content": analysis_prompt}]
-#     )
-
-#     print("Análisis de la pregunta en curso...")
-#     print(analysis_response.choices[0].message.content)
-
-#     analysis = json.loads(analysis_response.choices[0].message.content)
-    
-#     # Log del análisis
-#     debug_log["steps"].append({
-#         "step": "analysis",
-#         "prompt": analysis_prompt,
-#         "response": analysis,
-#         "raw_response": analysis_response.choices[0].message.content,
-#         "model": "gpt-5-mini"
-#     })
-
-
-#     # retriever.search_kwargs = {
-#     #         "k": 10,           
-#     #         "filter": {"date": "Sep 23, 2025 @ 00:00:00.000"}
-#     #     }
-
-
-#     # if analysis["is_vague"]:
-#     #     return analysis["need_clarification"]            
-
-
-#     subqueries = analysis["subqueries"]
-#     date_filter = analysis["date_filter"]
-
-#     # 3. Retrieval por subconsulta
-
-#     parent_scores = {}     # id_news -> score acumulado
-#     parent_docs = {}       # id_news -> Document
-#     CHILD_K = k            # k inicial del vectorstore
-#     RERANK_TOP_N = 5       # cuantos hijos sobreviven por subquery
-
-#     all_docs = {}
-#     retrieval_log = []
-
-#     # for subq in subqueries:
-#     #     search_kwargs = {"k": k}
-#     #     if date_filter:
-#     #         search_kwargs["filter"] = {"date": date_filter}
-
-#     #     retriever.search_kwargs = search_kwargs
-
-#     #     results = retriever.invoke(subq)
-        
-#     #     # Log de esta subquery
-#     #     subquery_log = {
-#     #         "subquery": subq,
-#     #         "search_kwargs": search_kwargs,
-#     #         "num_results": len(results),
-#     #         "documents": []
-#     #     }
-
-#     #     for doc in results:
-#     #         id_news = doc.metadata.get("id_news")
-            
-#     #         # Log del documento (contenido limitado)
-#     #         doc_log = {
-#     #             "id_news": id_news,
-#     #             "metadata": doc.metadata,
-#     #             "content_length": len(doc.page_content),
-#     #             "content_preview": doc.page_content[:DOC_CONTENT_LIMIT] + ("..." if len(doc.page_content) > DOC_CONTENT_LIMIT else "")
-#     #         }
-#     #         subquery_log["documents"].append(doc_log)
-            
-#     #         if id_news and id_news not in all_docs:
-#     #             all_docs[id_news] = doc
-        
-#     #     retrieval_log.append(subquery_log)
-    
-#     for subq in subqueries:
-#         search_kwargs = {"k": CHILD_K}
-#         if date_filter:
-#             search_kwargs["filter"] = {"date": date_filter}
-
-#         retriever.search_kwargs = search_kwargs
-
-#         # 1. Recuperar CHILD chunks
-#         child_results = retriever.vectorstore.similarity_search(
-#             subq,
-#             k=CHILD_K,
-#             filter=search_kwargs.get("filter")
-#         )
-
-#         if not child_results:
-#             continue
-
-#         # 2. Preparar textos para reranker
-#         rerank_docs = [doc.page_content for doc in child_results]
-
-#         rerank_response = co.rerank(
-#             model="rerank-v4.0-pro",
-#             query=subq,
-#             documents=rerank_docs,
-#             top_n=min(RERANK_TOP_N, len(rerank_docs))
-#         )
-
-#         subquery_log = {
-#             "subquery": subq,
-#             "retrieved_children": len(child_results),
-#             "reranked_children": len(rerank_response.results),
-#             "parents": []
-#         }
-
-#     # 3. Fusionar a nivel PARENT
-#     for r in rerank_response.results:
-#         child_doc = child_results[r.index]
-#         parent_id = child_doc.metadata.get("id_news")
-
-#         if not parent_id:
-#             continue
-
-#         score = r.relevance_score
-
-#         parent_scores[parent_id] = parent_scores.get(parent_id, 0) + score
-
-#         if parent_id not in parent_docs:
-#             parent_docs[parent_id] = child_doc
-
-#         subquery_log["parents"].append({
-#             "id_news": parent_id,
-#             "score": score
-#         })
-
-#     retrieval_log.append(subquery_log)
-
-
-
-
-
-#     # Guardar log de retrieval
-#     debug_log["steps"].append({
-#         "step": "retrieval",
-#         "subqueries_processed": retrieval_log,
-#         "unique_docs_found": len(all_docs)
-#     })
-
-#     sorted_parents = sorted(
-#         parent_scores.items(),
-#         key=lambda x: x[1],
-#         reverse=True
-#     )
-
-#     TOP_PARENTS = 5
-
-#     final_docs = [
-#         parent_docs[parent_id]
-#         for parent_id, _ in sorted_parents[:TOP_PARENTS]
-#     ]
-
-#     if not final_docs:
-#         debug_log["final_response"] = "No encontré información relevante en la base de datos para responder esta pregunta."
-#         debug_log["status"] = "no_results"
-#         save_debug_log(debug_log)
-#         return "No encontré información relevante en la base de datos para responder esta pregunta."
-    
-#     final_docs = final_docs[:5]
-    
-#     # Log de documentos finales seleccionados
-#     debug_log["steps"].append({
-#         "step": "final_docs_selection",
-#         "num_selected": len(final_docs),
-#         "selected_docs": [
-#             {
-#                 "id_news": d.metadata.get("id_news"),
-#                 "media_outlet": d.metadata.get("media_outlet"),
-#                 "date": d.metadata.get("date"),
-#                 "content_length": len(d.page_content),
-#                 "content_preview": d.page_content[:DOC_CONTENT_LIMIT] + ("..." if len(d.page_content) > DOC_CONTENT_LIMIT else "")
-#             }
-#             for d in final_docs
-#         ]
-#     })
-
-#     context = "\n\n".join(
-#         f"[{d.metadata.get('media_outlet')} - {d.metadata.get('date')}]\n{d.page_content}"
-#         for d in final_docs
-#     )
-
-#     final_prompt = f"""
-#         Responde la siguiente pregunta usando SOLO el contexto entregado.
-#         Si el contexto no es suficiente para responder alguna parte, indícalo explícitamente.
-#         Si la respuesta se puede listar, puedes entregar una lista de respuesta con un pequeño resumen citando los contextos.
-#         No opines NUNCA, JAMAS sobre el contexto en la respuesta. Si la respuesta 
-
-#         Pregunta:
-#         {query}
-
-#         Contexto:
-#         {context}
-#         """
-    
-#     # Log del prompt final
-#     debug_log["steps"].append({
-#         "step": "final_prompt",
-#         "prompt": final_prompt,
-#         "context_length": len(context),
-#         "model": "gpt-5-mini"
-#     })
-    
-#     completion = client.chat.completions.create(
-#         model="gpt-5-mini",
-#         messages=[{"role": "user", "content": final_prompt}],
-#         stream=True
-#     )
-#     respuesta = ""
-
-#     for chunk in completion:
-#         if chunk.choices[0].delta.content:
-#             token = chunk.choices[0].delta.content
-#             respuesta += token
-#             print(token, end="", flush=True)
-    
-#     # Log de la respuesta final
-#     debug_log["final_response"] = respuesta
-#     debug_log["status"] = "success"
-    
-#     # Guardar el log completo
-#     save_debug_log(debug_log)
-
-#     return respuesta
-
-
 def extraer_json_de_respuesta(raw_content):
     """Extrae y parsea JSON de la respuesta del modelo, manejando markdown code blocks."""
     try:
@@ -462,17 +188,102 @@ def buscar_con_filtro(vectorstore, subquery, k, filter_dict, date_filter):
         
         return child_results
 
+def configurar_parametros_rag(intents):
+    # Valores por defecto (Balanceados)
+    config = {
+        "CHILD_K": 10,      
+        "RERANK_TOP_N": 5,  
+        "TOP_PARENTS": 5    
+    }
+    
+    # 1. Ajuste por ALCANCE (El factor más determinante)
+    if intents.get("alcance") == "panorama" or intents.get("alcance") == "varios hechos":
+        config["CHILD_K"] = 20      
+        config["RERANK_TOP_N"] = 7  
+        config["TOP_PARENTS"] = 9   
+        
+    # 2. Ajuste por PROFUNDIDAD
+    elif intents.get("profundidad") == "puntual":
+        config["CHILD_K"] = 8        
+        config["RERANK_TOP_N"] = 3  
+        config["TOP_PARENTS"] = 3    
+        
+    # 3. Ajuste por PROPÓSITO
+    if intents.get("proposito") == "seguimiento temporal":
+        config["TOP_PARENTS"] = max(config["TOP_PARENTS"], 8)
+        
+    # 4. Ajuste por FORMATO
+    if intents.get("formato") == "lista":
+        config["TOP_PARENTS"] = max(config["TOP_PARENTS"], 8)
 
-def obtener_respuesta_stream(query, api_hk, k=10):
-    """
-    Versión streaming de obtener_respuesta que yielda tokens en tiempo real.
-    Yielda diccionarios con 'type' y 'content'.
-    """
+    print(f"[DEBUG] Configuración Adaptativa: {config}")
+    return config
+
+def construir_instrucciones_estilo(intents,query,context):
+    instrucciones = []
+
+    # 1. FORMATO (La estructura visual)
+    fmt = intents.get("formato")
+    if fmt == "lista":
+        instrucciones.append("- Estructura la respuesta usando viñetas (bullet points) o lista numerada para mayor claridad.")
+    elif fmt == "resumen":
+        instrucciones.append("- Genera un resumen consolidado en un solo bloque de texto o párrafos cortos.")
+    elif fmt == "explicacion narrativa":
+        instrucciones.append("- Usa una narrativa fluida, conectando los hechos en párrafos bien redactados.")
+
+    # 2. EXTENSIÓN (Longitud deseada)
+    ext = intents.get("extension")
+    if ext == "corta":
+        instrucciones.append("- Sé extremadamente conciso. Ve directo al grano sin rodeos.")
+    elif ext == "larga":
+        instrucciones.append("- Puedes extenderte en los detalles. No omitas información relevante del contexto.")
+    
+    # 3. PROPÓSITO (El enfoque mental del modelo)
+    prop = intents.get("proposito")
+    if prop == "comparar":
+        instrucciones.append("- Tu objetivo es CONTRASTAR la información. Usa palabras como 'por otro lado', 'a diferencia de', 'mientras que'.")
+    elif prop == "entender causas":
+        instrucciones.append("- Enfócate en explicar el POR QUÉ de los sucesos y sus consecuencias.")
+    elif prop == "seguimiento temporal":
+        instrucciones.append("- Es CRUCIAL que mantengas un orden cronológico estricto en tu respuesta.")
+    
+    # 4. PROFUNDIDAD (Tono)
+    prof = intents.get("profundidad")
+    if prof == "analitica":
+        instrucciones.append("- Adopta un tono analítico, sintetizando las ideas principales más allá de solo citar.")
+
+    instrucciones_prompt = "\n".join(instrucciones)
+
+    final_prompt = f"""
+        Actúa como un asistente de noticias experto y servicial.
+        Responde la siguiente pregunta usando SOLO el contexto entregado.
+        
+        INSTRUCCIONES DE ESTILO Y FORMATO (Síguelas estrictamente):
+        {instrucciones_prompt}
+        
+        REGLAS GLOBALES:
+        - La respuesta debe estar OBLIGATORIAMENTE EN MARKDOWN.
+        - Si el contexto no tiene la información, dilo honestamente.
+        - No opines sobre el contenido, solo informa.
+        - Usa un tono conversacional y profesional.
+
+        Pregunta:
+        {query}
+
+        Contexto:
+        {context}
+        """
+
+    return final_prompt
+
+
+
+def obtener_respuesta_stream(query, api_hk):
+
     # Inicializar estructura de log
     debug_log = {
         "timestamp": datetime.now().isoformat(),
         "query_original": query,
-        "k_parameter": k,
         "steps": []
     }
 
@@ -499,6 +310,14 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         Devuelve un JSON con este esquema EXACTO:
 
         {{
+        "intents": {{
+            "profundidad": "puntual" | "explicativa" | "analitica",
+            "alcance": "un hecho" | "varios hechos" | "panorama",
+            "formato": "resumen" | "lista" | "explicacion narrativa",
+            "extension": "corta" | "media" | "larga"
+            "proposito": "informase" | "comparar" | "entender causas" | "seguimiento temporal"
+        
+        }},
         "subqueries": list[string],
         "date_filter": {{
             "type": "exact" | "range" | null,
@@ -509,6 +328,8 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         }}
 
         Reglas:
+        - debe capturar la intención del usuario según los ejes indicados
+        - si no se especifica ningún eje, inferir el más probable según la pregunta
         - debe subdividir la query si es necesario en subqueries con al menos una pregunta concreta
         - las subqueries son subpreguntas formadas de la pregunta original para buscar en la base de datos
         - Las subqueries deben ser SEMÁNTICAMENTE DIFERENTES entre sí
@@ -575,6 +396,7 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         "model": "claude-4-5-sonnet"
     })
 
+    intent_axes = analysis["intents"]
     subqueries = analysis["subqueries"]
     date_filter = analysis["date_filter"]
 
@@ -591,10 +413,17 @@ def obtener_respuesta_stream(query, api_hk, k=10):
     
     yield {"type": "status", "content": f"Buscando información ({len(subqueries)} consultas){filter_msg}..."}
 
+    # CHILD_K = 10
+    # RERANK_TOP_N = 5
+    # TOP_PARENTS = 5
+    rag_config = configurar_parametros_rag(intent_axes)
+    CHILD_K = rag_config["CHILD_K"]
+    RERANK_TOP_N = rag_config["RERANK_TOP_N"]
+    
     parent_scores = {}
     parent_docs = {}
-    CHILD_K = k
-    RERANK_TOP_N = 5
+    
+    
     retrieval_log = []
     
     for subq in subqueries:
@@ -650,6 +479,8 @@ def obtener_respuesta_stream(query, api_hk, k=10):
 
         retrieval_log.append(subquery_log)
 
+    TOP_PARENTS = rag_config["TOP_PARENTS"]
+
     debug_log["steps"].append({
         "step": "retrieval",
         "subqueries_processed": retrieval_log,
@@ -662,7 +493,7 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         reverse=True
     )
 
-    TOP_PARENTS = 5
+    
 
     final_docs = [
         parent_docs[parent_id]
@@ -693,6 +524,7 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         "selected_docs": [
             {
                 "id_news": d.metadata.get("id_news"),
+                "title": d.metadata.get("title"),
                 "media_outlet": d.metadata.get("media_outlet"),
                 "date": d.metadata.get("date"),
                 "content_length": len(d.page_content),
@@ -707,19 +539,20 @@ def obtener_respuesta_stream(query, api_hk, k=10):
         for d in final_docs
     )
 
-    final_prompt = f"""
-        Responde la siguiente pregunta usando SOLO el contexto entregado, si es que responde bien.
-        Responde de forma conversacional, breve y directa. Evita siempre la misma estructura. Varía entre listas, párrafos y ejemplos.
-        LA RESPUESTA DEBE ESTAR OBLIGATORIAMENTE PARA TODAS EN MARKDOWN, PARA QUE LO LEA EL FRONTEND BIEN.
-        No opines NUNCA, JAMAS sobre el contexto en la respuesta.
+    # final_prompt = f"""
+    #     Responde la siguiente pregunta usando SOLO el contexto entregado, si es que responde bien.
+    #     Responde de forma conversacional, breve y directa. Evita siempre la misma estructura. Varía entre listas, párrafos y ejemplos.
+    #     LA RESPUESTA DEBE ESTAR OBLIGATORIAMENTE EN MARKDOWN, PARA QUE LO LEA EL FRONTEND BIEN.
+    #     No opines NUNCA sobre el contexto en la respuesta.
 
-        Pregunta:
-        {query}
+    #     Pregunta:
+    #     {query}
 
-        Contexto:
-        {context}
-        """
-    
+    #     Contexto:
+    #     {context}
+    #     """
+    final_prompt = construir_instrucciones_estilo(intent_axes, query, context)
+
     debug_log["steps"].append({
         "step": "final_prompt",
         "prompt": final_prompt,
@@ -759,6 +592,6 @@ if __name__ == "__main__":
     print(f"\n Consultando: {query}\n")
     print("=" * 80)
     
-    for chunk in obtener_respuesta_stream(query, api_key, k=10):
+    for chunk in obtener_respuesta_stream(query, api_key):
 
         print(f" {chunk['content']}")
