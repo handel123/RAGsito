@@ -1,0 +1,21 @@
+# API Framework
+fastapi==0.115.0
+uvicorn==0.34.0
+pydantic==2.10.6
+python-multipart==0.0.19
+
+# LangChain y Vector Store
+langchain-chroma==0.2.1
+langchain-openai==0.3.5
+langchain-text-splitters==0.4.0
+langchain-core==0.3.34
+langchain-classic==0.0.1
+
+# AI/ML
+openai==1.78.0
+cohere==5.20.0
+chromadb==1.3.7
+
+# Utilidades
+python-dotenv==1.0.1
+pandas==2.2.3

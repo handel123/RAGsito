@@ -1,0 +1,14 @@
+.env
+/front/
+/__pycache__/
+/dbs/
+/dbs_chroma_definitivo/
+/dbstore_parents/
+/debug_logs/
+/dbs_chroma_def/
+/dbs_chroma/
+/dbs_chromatest/
+conversation_history.json
+ingest.ipynb
+/docstore_parents/
+/datasets/
