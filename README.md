@@ -28,7 +28,7 @@ Si se quiere usar embeddings ya entrenados, se pueden descargar de la siguiente 
 ```bash
 gdown --folder "https://drive.google.com/drive/folders/15FLbcQEq_mGDz3n1Kn7V_92wTcWxiRy0"
 
-gdown --folder "https://drive.google.com/drive/folders/1w1hUNddmb05y0jL9ICjBnITYoOoqJETe"
+gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1w1hUNddmb05y0jL9ICjBnITYoOoqJETe"
 ```
 
 
