@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Key para OpenAI
-api_key = os.getenv("API_KEY")
+api_key_ = os.getenv("API_KEY")
 api_key_embeddings = os.getenv("API_KEY_EMBEDDINGS")
 api_key_cohere = os.getenv("API_KEY_COHERE")
 csv_path = "data/dataset_proyecto_chile_septiembre2025.csv"
@@ -279,7 +279,7 @@ def construir_instrucciones_estilo(intents,query,context):
 
 
 
-def obtener_respuesta_stream(query, api_hk):
+def obtener_respuesta_stream(query):
 
     # Inicializar estructura de log
     debug_log = {
@@ -290,9 +290,9 @@ def obtener_respuesta_stream(query, api_hk):
 
     #client = openai.OpenAI(api_key=api_key)
     if model_url:
-        client = openai.OpenAI(api_key=api_hk, base_url=model_url)
+        client = openai.OpenAI(api_key=api_key_, base_url=model_url)
     else:
-        client = openai.OpenAI(api_key=api_hk)
+        client = openai.OpenAI(api_key=api_key_)
     
     co = cohere.ClientV2(
         api_key=api_key_cohere
@@ -590,13 +590,3 @@ def obtener_respuesta_stream(query, api_hk):
     yield {"type": "done"}
 
 
-if __name__ == "__main__":
-    # Solo ejecuta esto si se corre directamente, no al importar
-    query = "¿han habido paros en los ultimos meses en el servicio publico?"
-    
-    print(f"\n Consultando: {query}\n")
-    print("=" * 80)
-    
-    for chunk in obtener_respuesta_stream(query, api_key):
-
-        print(f" {chunk['content']}")

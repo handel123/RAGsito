@@ -17,6 +17,23 @@ API_KEY_EMBEDDINGS -> para entrenar embeddings
 API_KEY_COHERE -> para reranker
 
 
+##  Crear embeddings
+```bash
+python ingest.py
+```
+
+
+Si se quiere usar embeddings ya entrenados, se pueden descargar de la siguiente manera:
+
+```bash
+gdown --folder "https://drive.google.com/drive/folders/15FLbcQEq_mGDz3n1Kn7V_92wTcWxiRy0"
+
+gdown --folder "https://drive.google.com/drive/folders/1w1hUNddmb05y0jL9ICjBnITYoOoqJETe"
+```
+
+
+
+
 ##  Ejecutar la API
 
 ```bash
@@ -28,19 +45,17 @@ La API estará disponible en: `http://localhost:8000`
 
 
 
-
-### 3. `POST /query/stream` - Consulta con Streaming
+###  `POST /query/stream` - Consulta con Streaming
 Envía una pregunta y recibe la respuesta en tiempo real.
 
 **Request Body:**
 {
-  "query": "¿Han habido paros en los últimos meses en el servicio público?",
-  "k": 10
+  "query": "¿Han habido paros en los últimos meses en el servicio público?"
 }
 
 **Respuesta:** Stream de eventos SSE
 
-### 4. `GET /health` - Estado de Salud
+###  `GET /health` - Estado de Salud
 Verifica que la API esté funcionando.
 
 **Respuesta:**
@@ -57,9 +72,8 @@ Verifica que la API esté funcionando.
 ### Con cURL
 
 ```bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "¿Han habido paros en los últimos meses?", "k": 10}'
+curl --location 'http://localhost:8000/query/stream' \
+--header 'Content-Type: application/json' \
+--data '{"query": "¿Han habido paros en los últimos meses?"}'
 ```
-
 

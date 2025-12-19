@@ -66,7 +66,7 @@ async def query_stream_endpoint(request: QueryRequest):
                 
                 # Crear el generador
                 def sync_generator():
-                    return obtener_respuesta_stream(request.query, api_key)
+                    return obtener_respuesta_stream(request.query)
                 
                 generator = await loop.run_in_executor(None, sync_generator)
                 
