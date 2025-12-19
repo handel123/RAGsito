@@ -7,8 +7,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_classic.retrievers import ParentDocumentRetriever
 from langchain_classic.storage import InMemoryStore, LocalFileStore, create_kv_docstore
-from dot_env import load_dotenv
+from dotenv import load_dotenv
+
 load_dotenv()
+
 api_key2 = os.getenv("API_KEY_EMBEDDINGS")
 
 
